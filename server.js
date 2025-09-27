@@ -15,6 +15,9 @@ app.use(express.json());
 // Serve static files for testing
 app.use(express.static('public'));
 
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'));
+
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
 fs.ensureDirSync(uploadsDir);
@@ -243,6 +246,11 @@ app.get('/all-session', (req, res) => {
   }
 });
 
+// Serve the main page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -256,11 +264,13 @@ app.get('/health', (req, res) => {
 app.listen(port, '0.0.0.0', () => {
   console.log(`Medical Transcription API server running on port ${port}`);
   console.log(`Server started at ${new Date().toISOString()}`);
+  console.log(`🌐 Web interface available at: http://localhost:${port}`);
   console.log('Available endpoints:');
+  console.log('  GET  / (Web interface for browsing audio files)');
   console.log('  POST /upload-session');
   console.log('  POST /get-presigned-url');
   console.log('  POST /upload-chunk/:sessionId/:chunkNumber');
   console.log('  POST /notify-chunk-uploaded');
-  console.log('  GET /all-session');
-  console.log('  GET /health');
+  console.log('  GET  /all-session');
+  console.log('  GET  /health');
 });
