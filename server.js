@@ -138,8 +138,24 @@ app.post('/upload-chunk/:sessionId/:chunkNumber', upload.single('audio'), (req, 
     }
     
     const session = sessions.get(sessionId);
+    const chunkNum = parseInt(chunkNumber);
+    
+    // Check if chunk already exists
+    const existingChunk = session.chunks.find(c => c.chunkNumber === chunkNum);
+    if (existingChunk) {
+      console.log(`Chunk ${chunkNumber} already exists for session ${sessionId}, skipping upload`);
+      return res.json({
+        success: true,
+        sessionId,
+        chunkNumber: chunkNum,
+        filename: existingChunk.filename,
+        size: existingChunk.size,
+        message: 'Chunk already exists, skipped upload'
+      });
+    }
+    
     const chunkInfo = {
-      chunkNumber: parseInt(chunkNumber),
+      chunkNumber: chunkNum,
       filename: req.file.filename,
       size: req.file.size,
       uploadedAt: new Date().toISOString(),
@@ -156,7 +172,7 @@ app.post('/upload-chunk/:sessionId/:chunkNumber', upload.single('audio'), (req, 
     res.json({
       success: true,
       sessionId,
-      chunkNumber,
+      chunkNumber: chunkNum,
       filename: req.file.filename,
       size: req.file.size,
       message: 'Chunk uploaded successfully'
