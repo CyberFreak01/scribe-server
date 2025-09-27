@@ -96,8 +96,9 @@ app.post('/get-presigned-url', (req, res) => {
       });
     }
     
-    // Generate presigned URL (in this case, just our upload endpoint)
-    const presignedUrl = `${req.protocol}://${req.get('host')}/upload-chunk/${sessionId}/${chunkNumber}`;
+    // Generate presigned URL (force HTTPS for production)
+    const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
+    const presignedUrl = `${protocol}://${req.get('host')}/upload-chunk/${sessionId}/${chunkNumber}`;
     
     console.log(`Generated presigned URL for session ${sessionId}, chunk ${chunkNumber}`);
     
