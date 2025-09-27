@@ -137,15 +137,24 @@ app.post('/upload-chunk/:sessionId/:chunkNumber', upload.single('audio'), (req, 
     }
     
     const session = sessions.get(sessionId);
+    const chunkNumberInt = parseInt(chunkNumber);
     const chunkInfo = {
-      chunkNumber: parseInt(chunkNumber),
+      chunkNumber: chunkNumberInt,
       filename: req.file.filename,
       size: req.file.size,
       uploadedAt: new Date().toISOString(),
       path: req.file.path
     };
     
-    // Add chunk to session
+    // Check if chunk already exists and remove it
+    const existingChunkIndex = session.chunks.findIndex(c => c.chunkNumber === chunkNumberInt);
+    if (existingChunkIndex !== -1) {
+      // Remove old chunk from array
+      session.chunks.splice(existingChunkIndex, 1);
+      console.log(`Replacing existing chunk ${chunkNumber} for session ${sessionId}`);
+    }
+    
+    // Add new chunk to session
     session.chunks.push(chunkInfo);
     session.totalChunks = session.chunks.length;
     sessions.set(sessionId, session);

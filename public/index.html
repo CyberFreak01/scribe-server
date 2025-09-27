@@ -104,6 +104,52 @@
         audio {
             width: 100%;
             margin-bottom: 10px;
+            outline: none;
+        }
+        
+        audio::-webkit-media-controls-panel {
+            background-color: #f8f9fa;
+        }
+        
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .play-btn, .pause-btn, .stop-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .play-btn:hover, .pause-btn:hover, .stop-btn:hover {
+            background: #2980b9;
+        }
+        
+        .stop-btn {
+            background: #e74c3c;
+        }
+        
+        .stop-btn:hover {
+            background: #c0392b;
+        }
+        
+        .audio-status {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
         }
         
         .download-btn {
@@ -204,6 +250,7 @@
                         audioItem.className = 'audio-item';
                         
                         const audioUrl = `/uploads/${session.sessionId}/${chunk.filename}`;
+                        const uniqueId = `audio_${session.sessionId}_${chunk.chunkNumber}`;
                         
                         audioItem.innerHTML = `
                             <h4>Chunk ${chunk.chunkNumber}</h4>
@@ -212,10 +259,18 @@
                                 Size: ${formatFileSize(chunk.size)}<br>
                                 Uploaded: ${new Date(chunk.uploadedAt).toLocaleString()}
                             </div>
-                            <audio controls>
+                            <div class="audio-controls">
+                                <button class="play-btn" onclick="playAudio('${uniqueId}')">▶️ Play</button>
+                                <button class="pause-btn" onclick="pauseAudio('${uniqueId}')">⏸️ Pause</button>
+                                <button class="stop-btn" onclick="stopAudio('${uniqueId}')">⏹️ Stop</button>
+                            </div>
+                            <audio id="${uniqueId}" preload="metadata" onerror="handleAudioError('${uniqueId}')" onloadstart="handleAudioLoadStart('${uniqueId}')" oncanplay="handleAudioCanPlay('${uniqueId}')">
                                 <source src="${audioUrl}" type="audio/wav">
+                                <source src="${audioUrl}" type="audio/mpeg">
                                 Your browser does not support the audio element.
                             </audio>
+                            <div id="${uniqueId}_status" class="audio-status">Ready to play</div>
+                            <div id="${uniqueId}_error" class="error-message" style="display: none;"></div>
                             <br>
                             <a href="${audioUrl}" download="${chunk.filename}" class="download-btn">📥 Download</a>
                         `;
@@ -238,6 +293,67 @@
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Audio control functions
+        function playAudio(audioId) {
+            const audio = document.getElementById(audioId);
+            const status = document.getElementById(audioId + '_status');
+            const error = document.getElementById(audioId + '_error');
+            
+            if (audio) {
+                audio.play().then(() => {
+                    status.textContent = 'Playing...';
+                    error.style.display = 'none';
+                }).catch(err => {
+                    status.textContent = 'Playback failed';
+                    error.textContent = 'Error: ' + err.message;
+                    error.style.display = 'block';
+                });
+            }
+        }
+        
+        function pauseAudio(audioId) {
+            const audio = document.getElementById(audioId);
+            const status = document.getElementById(audioId + '_status');
+            
+            if (audio) {
+                audio.pause();
+                status.textContent = 'Paused';
+            }
+        }
+        
+        function stopAudio(audioId) {
+            const audio = document.getElementById(audioId);
+            const status = document.getElementById(audioId + '_status');
+            
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+                status.textContent = 'Stopped';
+            }
+        }
+        
+        function handleAudioError(audioId) {
+            const status = document.getElementById(audioId + '_status');
+            const error = document.getElementById(audioId + '_error');
+            
+            status.textContent = 'Error loading audio';
+            error.textContent = 'Failed to load audio file. The file may be corrupted or in an unsupported format.';
+            error.style.display = 'block';
+        }
+        
+        function handleAudioLoadStart(audioId) {
+            const status = document.getElementById(audioId + '_status');
+            status.textContent = 'Loading...';
+        }
+        
+        function handleAudioCanPlay(audioId) {
+            const status = document.getElementById(audioId + '_status');
+            const error = document.getElementById(audioId + '_error');
+            
+            status.textContent = 'Ready to play';
+            error.style.display = 'none';
         }
         
         // Load sessions on page load
