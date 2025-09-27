@@ -69,11 +69,46 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            user-select: none;
+        }
+        
+        .session-header:hover {
+            background: #d5dbdb;
+        }
+        
+        .session-title {
+            flex: 1;
         }
         
         .session-info {
             font-size: 14px;
             color: #666;
+            font-weight: normal;
+        }
+        
+        .collapse-arrow {
+            font-size: 18px;
+            color: #666;
+            transition: transform 0.3s ease;
+            margin-left: 10px;
+        }
+        
+        .session.collapsed .collapse-arrow {
+            transform: rotate(-90deg);
+        }
+        
+        .session-content {
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .session.collapsed .session-content {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
         }
         
         .audio-grid {
@@ -175,6 +210,10 @@
             }
         }
         
+        function toggleSession(sessionElement) {
+            sessionElement.classList.toggle('collapsed');
+        }
+        
         function displaySessions(sessions) {
             const container = document.getElementById('sessions-container');
             
@@ -184,8 +223,10 @@
                 
                 const sessionHeader = document.createElement('div');
                 sessionHeader.className = 'session-header';
+                sessionHeader.onclick = () => toggleSession(sessionDiv);
+                
                 sessionHeader.innerHTML = `
-                    <div>
+                    <div class="session-title">
                         <strong>Session: ${session.sessionId}</strong>
                         <div class="session-info">
                             Created: ${new Date(session.createdAt).toLocaleString()} | 
@@ -193,7 +234,11 @@
                             Status: ${session.status}
                         </div>
                     </div>
+                    <div class="collapse-arrow">▼</div>
                 `;
+                
+                const sessionContent = document.createElement('div');
+                sessionContent.className = 'session-content';
                 
                 const audioGrid = document.createElement('div');
                 audioGrid.className = 'audio-grid';
@@ -226,8 +271,9 @@
                     audioGrid.innerHTML = '<div class="no-files">No audio chunks in this session</div>';
                 }
                 
+                sessionContent.appendChild(audioGrid);
                 sessionDiv.appendChild(sessionHeader);
-                sessionDiv.appendChild(audioGrid);
+                sessionDiv.appendChild(sessionContent);
                 container.appendChild(sessionDiv);
             });
         }
